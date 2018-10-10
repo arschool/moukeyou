@@ -16,7 +16,7 @@ class GameScene: SKScene,AVAudioPlayerDelegate, SKPhysicsContactDelegate {
     //残りの時間
     var timer2: Timer?
     //残りの時間の表示用
-    var timer3: Int = 60 {
+    var timer3: Int = 10 {
         didSet {
             timerLabel.text = "残り時間: \(timer3)"
         }
@@ -184,6 +184,10 @@ class GameScene: SKScene,AVAudioPlayerDelegate, SKPhysicsContactDelegate {
         //残りの時間を減らす
         timer2 = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true, block: { _ in
             self.timer3 = self.timer3 - 1
+            //0秒になったらゲームオーバー
+            if(self.timer3 <= 0) {
+                self.gameOver()
+            }
         })
         
         //ゲーム画面の背景色を薄緑にする
@@ -488,4 +492,22 @@ class GameScene: SKScene,AVAudioPlayerDelegate, SKPhysicsContactDelegate {
             ao_ie.run(moveToLeft)
         }
     }
+    
+    func gameOver() {
+        //ゲームを中断
+        isPaused = true
+        //タイマーを止める
+        timer?.invalidate()
+        timer2?.invalidate()
+        //音を止める
+        //FIXME
+        
+        //得点を保存する
+        //FIXME
+        //1秒後に画面を移動する
+        Timer.scheduledTimer(withTimeInterval: 1.0, repeats: false) { _ in
+            //FIXME
+        }
+    }
+    
 }
