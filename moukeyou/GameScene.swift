@@ -74,10 +74,29 @@ class GameScene: SKScene,AVAudioPlayerDelegate, SKPhysicsContactDelegate {
     var nokorijikan:Int = 60
     var timerLabel: SKLabelNode!
     
-    let aka_ieCategory: UInt32 = 0b0001
-    let ao_ieCategory: UInt32 = 0b0010
-    let okaneCategory: UInt32 = 0b0100
-    let bigCategory: UInt32 = 0b1000
+
+    //家のカテゴリ 0b10ではじめる
+    let aka_ieCategory: UInt32 = 0b100001
+    let ao_ieCategory: UInt32 = 0b100010
+    //お金のカテゴリ 0b01ではじめる
+    let okaneCategory: UInt32 = 0b010000
+//    let bigCategory: UInt32 = 0b1000 //使わないのでコメントアウト
+    
+    //お金のカテゴリを設定（衝突判定で点数を分けるのに使う）
+    // 0b01ではじめる
+    let gohyakuenCaregory: UInt32 = 0b010001
+    let gojyuuyenCaregory: UInt32 = 0b010010
+    let hyakuenCaregory: UInt32 =   0b010011
+    let goyenCaregory: UInt32 =     0b010100
+    let minusgohyakuyenCaregory: UInt32 = 0b010101
+    let minushyakuyenCaregory: UInt32 = 0b010110
+    let minustenyenCaregory: UInt32 =   0b110111
+    let tenyenCaregory: UInt32 =   0b011000
+    let ie_bigCaregory: UInt32 =   0b011001
+    let ie_smallCaregory: UInt32 = 0b011010
+    
+    
+    
     var scoreLabel: SKLabelNode!
     var scoreLabel2: SKLabelNode!
     
@@ -91,37 +110,92 @@ class GameScene: SKScene,AVAudioPlayerDelegate, SKPhysicsContactDelegate {
         okane.position = CGPoint(x: positionX, y: frame.height / 2 + okane.frame.height)
         okane.scale(to: CGSize(width: 70, height: 70))
         okane.physicsBody = SKPhysicsBody(circleOfRadius: okane.frame.width)
+        //衝突時にスコアを判定するために、それぞれごとにカテゴリを設定する
+        if(index == 0){
+            okane.physicsBody?.categoryBitMask = gohyakuenCaregory
+        } else if(index == 1){
+            okane.physicsBody?.categoryBitMask = gojyuuyenCaregory
+        } else if(index == 2){
+            okane.physicsBody?.categoryBitMask = hyakuenCaregory
+        } else if(index == 3){
+            okane.physicsBody?.categoryBitMask = goyenCaregory
+        } else if(index == 4){
+            okane.physicsBody?.categoryBitMask = minusgohyakuyenCaregory
+        } else if(index == 5){
+            okane.physicsBody?.categoryBitMask = minushyakuyenCaregory
+        } else if(index == 6){
+            okane.physicsBody?.categoryBitMask = minustenyenCaregory
+        } else if(index == 7){
+            okane.physicsBody?.categoryBitMask = tenyenCaregory
+        } else if(index == 8){
+            okane.physicsBody?.categoryBitMask = ie_bigCaregory
+        } else {
+            okane.physicsBody?.categoryBitMask = ie_smallCaregory
+        }
+        //ぶつかる相手は青い家または赤い家
+        okane.physicsBody?.contactTestBitMask = ao_ieCategory|aka_ieCategory
+        okane.physicsBody?.collisionBitMask = 0
         addChild(okane)
         let move = SKAction.moveTo(y: -frame.height / 2 - okane.frame.height, duration: 20.0)
         let remove = SKAction.removeFromParent()
         okane.run(SKAction.sequence([move, remove]))
     }
     func didBegin(_ contact: SKPhysicsContact) {
+        //わかりやすいように変数名を okane, ie にする
         var okane: SKPhysicsBody
-        var target: SKPhysicsBody
-        if contact.bodyA.categoryBitMask == okaneCategory {
-            okane = contact.bodyA
-            target = contact.bodyB
+        var ie: SKPhysicsBody
+        //衝突で取れる点数
+        var tensu: Int = 0
+        
+        if contact.bodyA.categoryBitMask == aka_ieCategory || contact.bodyA.categoryBitMask == ao_ieCategory {
+            okane = contact.bodyB
+            ie = contact.bodyA
             
         } else {
-            okane = contact.bodyB
-            target = contact.bodyA
-        }
-        guard let okaneNode = okane.node else { return }
-
-        guard let targetNode = target.node else { return }
-        if target.categoryBitMask == aka_ieCategory {
-            score += 5
+            okane = contact.bodyA
+            ie = contact.bodyB
         }
         
-        if target.categoryBitMask == ao_ieCategory {
-            score2 += 5
+        //ぶつかったお金によって点数を変更
+        if(okane.categoryBitMask == gohyakuenCaregory){
+            tensu = 500
+        } else if (okane.categoryBitMask == gojyuuyenCaregory){
+            tensu = 50
+        } else if (okane.categoryBitMask == gojyuuyenCaregory){
+            tensu = 50
+        } else if (okane.categoryBitMask == hyakuenCaregory){
+            tensu = 100
+        } else if (okane.categoryBitMask == goyenCaregory){
+            tensu = 5
+        } else if (okane.categoryBitMask == minusgohyakuyenCaregory){
+            tensu = -500
+        } else if (okane.categoryBitMask == minushyakuyenCaregory){
+            tensu = -100
+        } else if (okane.categoryBitMask == minustenyenCaregory){
+            tensu = -10
+        } else if (okane.categoryBitMask == tenyenCaregory){
+            tensu = 10
+        } else if (okane.categoryBitMask == ie_bigCaregory){
+            tensu = 88
+        } else {
+            tensu = 33
+        }
+        
+        guard let okaneNode = okane.node else { return }
+
+        //赤い家の場合は、赤い家の点数 self.scoreに足す
+        if ie.categoryBitMask == aka_ieCategory {
+            self.score += tensu
+        }
+        
+        //青いい家の場合は、青い家の点数 self.score2 に足す
+        if ie.categoryBitMask == ao_ieCategory {
+            self.score2 += tensu
         }
 
-        guard target.node != nil else { return }
         okaneNode.removeFromParent()
         playSound(name: "reji sound")
-        }
+    }
     
     
     
@@ -195,7 +269,8 @@ class GameScene: SKScene,AVAudioPlayerDelegate, SKPhysicsContactDelegate {
         self.aka_ie.position = CGPoint(x: frame.midX - view.frame.size.width / 3.5, y: frame.midY + view.frame.size.height / 4)
         self.aka_ie.physicsBody = SKPhysicsBody(rectangleOf: CGSize(width: frame.width / 30, height: frame.width / 30))
         self.aka_ie.physicsBody?.categoryBitMask = aka_ieCategory
-        self.aka_ie.physicsBody?.contactTestBitMask = aka_ieCategory
+        // ぶつかる相手はお金
+        self.aka_ie.physicsBody?.contactTestBitMask = okaneCategory
         self.aka_ie.physicsBody?.collisionBitMask = 0
         
         addChild(self.aka_ie)
@@ -205,7 +280,8 @@ class GameScene: SKScene,AVAudioPlayerDelegate, SKPhysicsContactDelegate {
         self.ao_ie.position = CGPoint(x: frame.midX + view.frame.size.width / 3.5, y: frame.midY + view.frame.size.height / 4)
         self.ao_ie.physicsBody = SKPhysicsBody(rectangleOf: CGSize(width: frame.width / 30, height: frame.width / 30))
         self.ao_ie.physicsBody?.categoryBitMask = ao_ieCategory
-        self.ao_ie.physicsBody?.contactTestBitMask = ao_ieCategory
+        // ぶつかる相手はお金
+        self.ao_ie.physicsBody?.contactTestBitMask = okaneCategory
         self.ao_ie.physicsBody?.collisionBitMask = 0
         
         addChild(self.ao_ie)
