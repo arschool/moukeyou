@@ -16,7 +16,7 @@ class GameScene: SKScene,AVAudioPlayerDelegate, SKPhysicsContactDelegate {
     //残りの時間
     var timer2: Timer?
     //残りの時間の表示用
-    var timer3: Int = 10 {
+    var timer3: Int = 60 {
         didSet {
             timerLabel.text = "残り時間: \(timer3)"
         }
